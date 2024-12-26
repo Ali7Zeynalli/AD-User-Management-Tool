@@ -8,14 +8,29 @@ This tool provides AD administrators with powerful capabilities to view, filter,
 
 ## Features
 1. Remote Connection
-2. User List Display
-3. Advanced Filtering
-4. User Details
-5. Password Management
-6. Account Locking/Unlocking
-7. Data Export (CSV format)
-8. Real-Time Statistics
-9. Security Measures and Operation Logging
+2. ![1](https://github.com/user-attachments/assets/fe528dfa-4ae5-4036-b924-ecb10749bc52)
+
+3. User List Display
+4. ![2](https://github.com/user-attachments/assets/402f3c8f-5817-4d52-b9d2-cec78a6ba5d2)
+
+5. Advanced Filtering
+6. ![3](https://github.com/user-attachments/assets/13926314-585f-478a-9457-feb9ddb90fa5)
+
+7. User Details
+8. ![7](https://github.com/user-attachments/assets/fd7c7804-f4e2-46eb-a995-1db2d8d3db21)
+
+9. Password Management
+10. ![Screenshot 2024-12-26 204653](https://github.com/user-attachments/assets/01bc5427-3563-4f20-8518-572b0664f254)
+
+11. Account Locking/Unlocking
+12. ![Screenshot 2024-12-26 204807](https://github.com/user-attachments/assets/3946341b-450a-495e-8353-055c32389d17)
+
+13. Data Export (CSV format)
+14. ![Screenshot 2024-12-26 204853](https://github.com/user-attachments/assets/0fbd3b88-eda3-4ce0-a98a-2aea5db05d45)
+![5](https://github.com/user-attachments/assets/7615d372-36d3-43b6-a914-7fa43c6644d4)
+
+15. Real-Time Statistics
+16. Security Measures and Operation Logging
 
 ## System Requirements
 - Windows PowerShell 5.1 or higher
@@ -155,3 +170,7 @@ PowerShell alətidir. Bu alət, AD administratorlarına istifadəçi hesabların
 ## Məsləhətlər
 - Mütəmadi olaraq alətdən istifadə etməzdən əvvəl "Yenilə" funksiyasından istifadə edin.
 - Böyük AD mühitlərində, filtrasiya xüsusiyyətlərindən istifadə edərək axtarışlarınızı optimallaşdırın.
+
+
+
+
