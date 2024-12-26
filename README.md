@@ -26,7 +26,6 @@ This tool provides AD administrators with powerful capabilities to view, filter,
 12. ![Screenshot 2024-12-26 204807](https://github.com/user-attachments/assets/3946341b-450a-495e-8353-055c32389d17)
 
 13. Data Export (CSV format)
-14. ![Screenshot 2024-12-26 204853](https://github.com/user-attachments/assets/0fbd3b88-eda3-4ce0-a98a-2aea5db05d45)
 ![5](https://github.com/user-attachments/assets/7615d372-36d3-43b6-a914-7fa43c6644d4)
 
 15. Real-Time Statistics
