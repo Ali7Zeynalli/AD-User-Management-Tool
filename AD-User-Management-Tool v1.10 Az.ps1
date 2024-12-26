@@ -1,4 +1,6 @@
-﻿param(
+#Author:This script was written by Ali Zeynalli.
+ 
+ param(
     [Parameter(Mandatory=$false)]
     [string]$Server = $env:COMPUTERNAME,
 
