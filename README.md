@@ -1,5 +1,8 @@
 English
 
+Author
+This script was written by Ali Zeynalli.
+
 # AD-UserManagementTool
 
 ## Overview
@@ -94,6 +97,8 @@ Right-click on a user to perform the following operations:
 
 
 Azərbaycan dilində
+Müəllif
+Bu skript Əli Zeynallı tərəfindən yazılmışdır.
 
 # AD-İstifadəçiİdarəetməAləti
 
