@@ -393,7 +393,7 @@ $xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Active Directory User Report" 
-    Height="700" Width="1282"
+    Height="500" Width="1000"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
     Background="#1E1E1E" Foreground="#FF1E1E1E">
@@ -859,148 +859,122 @@ function Show-UserDetails {
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="User Details" 
-    Height="435" Width="518"
-    WindowStartupLocation="CenterOwner"
-    WindowStyle="ToolWindow"
-    Background="#FF1E1E1E">
+    Title="User Details"
+    Height="400"
+    Width="494"
+    Background="#FF1E1E1E"
+    WindowStartupLocation="CenterOwner">
 
-    <Grid Margin="20">
+    <Grid Margin="10,0,10,4">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Title -->
+
         <!-- Main Content -->
-        <Border Grid.Row="1" 
-                BorderBrush="#e0e0e0" 
-                BorderThickness="1" 
-                CornerRadius="4"
-                Background="#FFFFFF">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Foreground="#FF333333" Background="#FF424242">
-                <Grid Margin="15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+        <Border Grid.Row="1" CornerRadius="8" Background="#2C2C2C" Padding="15" Margin="0,0,0,-5">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <!-- Left Panel -->
-                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="Basic Information" 
-                                 FontWeight="SemiBold" 
-                                 Margin="0,0,0,10" Foreground="White"/>
-
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Username -->
-                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                                <TextBlock Text="Username" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding SamAccountName}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-
-                            <!-- Email -->
-                            <StackPanel Grid.Row="1" Margin="0,0,0,8">
-                                <TextBlock Text="Email" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding EmailAddress}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-
-                            <!-- Department -->
-                            <StackPanel Grid.Row="2" Margin="0,0,0,8">
-                                <TextBlock Text="Department" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding Department}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-
-                            <!-- Title -->
-                            <StackPanel Grid.Row="3" Margin="0,0,0,8">
-                                <TextBlock Text="Title" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding Title}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-
-                            <!-- Phone -->
-                            <StackPanel Grid.Row="4" Margin="0,0,0,8">
-                                <TextBlock Text="Phone" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding Phone}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-
-                            <!-- Mobile -->
-                            <StackPanel Grid.Row="5" Margin="0,0,0,8">
-                                <TextBlock Text="Mobile" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding Mobile}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
-                        </Grid>
+                    <!-- Username -->
+                    <StackPanel Grid.Row="0" Margin="0,5">
+                        <TextBlock Text="Username" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding SamAccountName}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
                     </StackPanel>
 
-                    <!-- Right Panel -->
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                        <TextBlock Text="System Information" 
-                                 FontWeight="SemiBold" 
-                                 Margin="0,0,0,10" Foreground="White"/>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                    <!-- Full Name -->
+                    <StackPanel Grid.Row="1" Margin="0,5">
+                        <TextBlock Text="Name" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding DisplayName}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
 
-                            <!-- Status -->
-                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                                <TextBlock Text="Status" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding Status}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
+                    <!-- Email -->
+                    <StackPanel Grid.Row="2" Margin="0,5">
+                        <TextBlock Text="Email" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding EmailAddress}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
 
-                            <!-- Last Login -->
-                            <StackPanel Grid.Row="1" Margin="0,0,0,8">
-                                <TextBlock Text="Last Login" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding LastLogonDate}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
+                    <!-- Department -->
+                    <StackPanel Grid.Row="3" Margin="0,5">
+                        <TextBlock Text="Department" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Department}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
 
-                            <!-- Password Status -->
-                            <StackPanel Grid.Row="2" Margin="0,0,0,8">
-                                <TextBlock Text="Password Status" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding PasswordStatus}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
+                    <!-- Title -->
+                    <StackPanel Grid.Row="4" Margin="0,5">
+                        <TextBlock Text="Title" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Title}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
 
-                            <!-- OU -->
-                            <StackPanel Grid.Row="3" Margin="0,0,0,8">
-                                <TextBlock Text="OU" Foreground="White" FontSize="12"/>
-                                <TextBlock Text="{Binding OU}" Margin="0,2" Foreground="White"/>
-                            </StackPanel>
+                    <!-- Phone -->
+                    <StackPanel Grid.Row="5" Margin="0,5">
+                        <TextBlock Text="Phone" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Phone}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
 
-                            <!-- Groups -->
-                            <StackPanel Grid.Row="4" Margin="0,0,0,8">
-                                <TextBlock Text="Groups" Foreground="#FFFFFDFD" FontSize="12"/>
-                                <TextBlock Text="{Binding Groups}" Margin="0,2" Foreground="White" TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Grid>
+                    <!-- Mobile -->
+                    <StackPanel Grid.Row="6" Margin="0,5">
+                        <TextBlock Text="Mobile" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Mobile}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- Status -->
+                    <StackPanel Grid.Row="7" Margin="0,5">
+                        <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Status}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- Last Login -->
+                    <StackPanel Grid.Row="8" Margin="0,5">
+                        <TextBlock Text="Last Login Date" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding LastLogonDate}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- Password Status -->
+                    <StackPanel Grid.Row="9" Margin="0,5">
+                        <TextBlock Text="Password Status" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding PasswordStatus}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- OU -->
+                    <StackPanel Grid.Row="10" Margin="0,5">
+                        <TextBlock Text="Organizational Unit (OU)" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding OU}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- Groups -->
+                    <StackPanel Grid.Row="11" Margin="0,5">
+                        <TextBlock Text="Groups" FontSize="12" FontWeight="SemiBold" Foreground="#A5D6A7" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding Groups}" IsReadOnly="True" Background="#333333" Foreground="White" Padding="3" FontSize="12" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
         </Border>
 
-        <!-- Footer Button -->
-        <Button Grid.Row="2" 
-                x:Name="CloseDetailsButton"
-                Content="Close"
-                Width="100"
-                Height="30"
-                Margin="0,15,0,0"
-                Background="#FF7B0000"
-                BorderBrush="#FFB3363C"
-                HorizontalAlignment="Right"
-                Foreground="White"/>
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="CloseDetailsButton" Content="Close" Width="90" Background="#F44336" Foreground="White" FontSize="12"/>
+        </StackPanel>
     </Grid>
 </Window>
+
 "@ 
     $detailsReader = [System.IO.StringReader]::new($detailsXaml)
     $detailsXmlReader = [System.Xml.XmlReader]::Create($detailsReader)
