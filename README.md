@@ -20,7 +20,7 @@ This tool provides AD administrators with powerful capabilities to view, filter,
 6. ![3](https://github.com/user-attachments/assets/13926314-585f-478a-9457-feb9ddb90fa5)
 
 7. User Details
-8. ![7](https://github.com/user-attachments/assets/fd7c7804-f4e2-46eb-a995-1db2d8d3db21)
+8. ![user detalis](https://github.com/user-attachments/assets/3afaaf6d-1d26-4472-9583-d76e67faa82b)
 
 9. Password Management
 10. ![Screenshot 2024-12-26 204653](https://github.com/user-attachments/assets/01bc5427-3563-4f20-8518-572b0664f254)
