@@ -10,9 +10,74 @@
 
     [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential
-    )
+)
 
 
+# Active Directory Modulunu yoxlayan və lazım olduqda quraşdıran funksiya
+function Ensure-ActiveDirectoryModule {
+    Write-Host "Sistemin hazır vəziyyətini yoxlayıram..." -ForegroundColor Yellow
+
+    # Active Directory modulunun quraşdırılmasını yoxlayın
+    $moduleInstalled = Get-Module -ListAvailable -Name ActiveDirectory
+    if (-not $moduleInstalled) {
+        Write-Host "Active Directory modulu tapılmadı. Modulu quraşdırıram..." -ForegroundColor Yellow
+
+        # RSAT Active Directory modulu quraşdır
+        try {
+            Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0 -ErrorAction Stop
+            Write-Host "Active Directory modulu uğurla quraşdırıldı." -ForegroundColor Green
+        } catch {
+            Write-Host "Active Directory modulunun quraşdırılmasında xəta baş verdi: $_" -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host "Active Directory modulu artıq quraşdırılıb." -ForegroundColor Green
+    }
+
+    # Modulu import edin
+    try {
+        Import-Module ActiveDirectory -ErrorAction Stop
+        Write-Host "Active Directory modulu yükləndi." -ForegroundColor Green
+    } catch {
+        Write-Host "Active Directory modulunun yüklənməsində xəta baş verdi: $_" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# PowerShell versiyasını yoxlayan funksiya
+function Ensure-PowerShellVersion {
+    $requiredVersion = [Version]"5.1"
+    if ($PSVersionTable.PSVersion -lt $requiredVersion) {
+        Write-Host "PowerShell versiyası $($PSVersionTable.PSVersion) tələb olunan $requiredVersion-dən aşağıdır." -ForegroundColor Red
+        Write-Host "PowerShell-i yeniləmək üçün [Windows Management Framework] yükləməlisiniz." -ForegroundColor Yellow
+        exit 1
+    } else {
+        Write-Host "PowerShell versiyası tələb olunan səviyyədədir ($($PSVersionTable.PSVersion))." -ForegroundColor Green
+    }
+}
+
+# TrustedHosts-a server əlavə edən funksiya
+function Ensure-TrustedHosts {
+    param([string]$Server)
+
+    $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+    if ($trustedHosts -notlike "*$Server*") {
+        Write-Host "Server ($Server) TrustedHosts siyahısına əlavə edilir..." -ForegroundColor Yellow
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$trustedHosts,$Server" -Force
+        Write-Host "Server TrustedHosts siyahısına əlavə edildi." -ForegroundColor Green
+    } else {
+        Write-Host "Server ($Server) artıq TrustedHosts siyahısındadır." -ForegroundColor Green
+    }
+}
+
+# Funksiyaları çağırın
+Ensure-PowerShellVersion
+Ensure-ActiveDirectoryModule
+
+
+Write-Host "Sistem uğurla hazırlandı. İndi əsas skript işə salınır..." -ForegroundColor Cyan
+
+# Əsas skript buradan baslayir
 
 function Test-IsDomainController {
     try {

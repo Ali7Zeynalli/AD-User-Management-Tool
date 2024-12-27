@@ -12,6 +12,65 @@ param(
     [System.Management.Automation.PSCredential]$Credential
 )
 
+# Function to check and install Active Directory Module
+function Ensure-ActiveDirectoryModule {
+   Write-Host "Checking system readiness..." -ForegroundColor Yellow
+   # Check if AD module is installed
+   $moduleInstalled = Get-Module -ListAvailable -Name ActiveDirectory
+   if (-not $moduleInstalled) {
+       Write-Host "Active Directory module not found. Installing module..." -ForegroundColor Yellow
+       # Install RSAT Active Directory module
+       try {
+           Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0 -ErrorAction Stop
+           Write-Host "Active Directory module installed successfully." -ForegroundColor Green
+       } catch {
+           Write-Host "Error installing Active Directory module: $_" -ForegroundColor Red
+           exit 1
+       }
+   } else {
+       Write-Host "Active Directory module already installed." -ForegroundColor Green
+   }
+   # Import module
+   try {
+       Import-Module ActiveDirectory -ErrorAction Stop
+       Write-Host "Active Directory module loaded." -ForegroundColor Green
+   } catch {
+       Write-Host "Error loading Active Directory module: $_" -ForegroundColor Red
+       exit 1
+   }
+}
+
+# Function to check PowerShell version
+function Ensure-PowerShellVersion {
+   $requiredVersion = [Version]"5.1"
+   if ($PSVersionTable.PSVersion -lt $requiredVersion) {
+       Write-Host "PowerShell version $($PSVersionTable.PSVersion) is below required $requiredVersion." -ForegroundColor Red
+       Write-Host "Please install [Windows Management Framework] to update PowerShell." -ForegroundColor Yellow
+       exit 1
+   } else {
+       Write-Host "PowerShell version meets requirements ($($PSVersionTable.PSVersion))." -ForegroundColor Green
+   }
+}
+
+# Function to add server to TrustedHosts
+function Ensure-TrustedHosts {
+   param([string]$Server)
+   $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+   if ($trustedHosts -notlike "*$Server*") {
+       Write-Host "Adding server ($Server) to TrustedHosts list..." -ForegroundColor Yellow
+       Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$trustedHosts,$Server" -Force
+       Write-Host "Server added to TrustedHosts list." -ForegroundColor Green
+   } else {
+       Write-Host "Server ($Server) already in TrustedHosts list." -ForegroundColor Green
+   }
+}
+
+# Call functions
+Ensure-PowerShellVersion
+Ensure-ActiveDirectoryModule
+Write-Host "System successfully prepared. Starting main script..." -ForegroundColor Cyan
+# Main script starts here
+
 function Test-IsDomainController {
     try {
         $computerSystem = Get-WmiObject Win32_ComputerSystem
