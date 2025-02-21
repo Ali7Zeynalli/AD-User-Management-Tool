@@ -11,10 +11,6 @@
     [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential
 )
-
-
-
-
 # WinRM xidmətinin vəziyyətini yoxlayan və düzəldən funksiya
 function Ensure-WinRMConfiguration {
     Write-Host "WinRM xidmətini yoxlayıram..." -ForegroundColor Yellow

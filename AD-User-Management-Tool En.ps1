@@ -13,39 +13,39 @@
 )
 # Function to check and fix the status of the WinRM service
 function Ensure-WinRMConfiguration {
-    Write-Host "Checking WinRM service status..." -ForegroundColor Yellow
+    Write-Host "Checking WinRM service..." -ForegroundColor Yellow
 
     # 1. Check the status of the WinRM service
     $winrmStatus = Get-Service -Name WinRM
     if ($winrmStatus.Status -ne "Running") {
-        Write-Host "WinRM service is not running, starting it now..." -ForegroundColor Yellow
+        Write-Host "WinRM service is not active, activating..." -ForegroundColor Yellow
         Start-Service -Name WinRM
         Set-Service -Name WinRM -StartupType Automatic
     } else {
-        Write-Host "WinRM service is already running." -ForegroundColor Green
+        Write-Host "WinRM service is already active." -ForegroundColor Green
     }
 
-    # 2. Check and fix WinRM configuration
+    # 2. Check and apply WinRM configuration
     Write-Host "Checking and applying WinRM configuration..." -ForegroundColor Yellow
     winrm quickconfig -quiet
 
-    # 3. Enable PowerShell Remoting
-    Write-Host "Enabling PowerShell Remoting..." -ForegroundColor Yellow
+    # 3. Activate PowerShell Remoting
+    Write-Host "Activating PowerShell Remoting..." -ForegroundColor Yellow
     Enable-PSRemoting -Force
 
-    # 4. Check and add firewall rule
+    # 4. Check and open firewall rule
     $firewallRule = Get-NetFirewallRule -DisplayName "Windows Remote Management (HTTP-In)" -ErrorAction SilentlyContinue
     if (-not $firewallRule) {
         Write-Host "Adding firewall rule for WinRM..." -ForegroundColor Yellow
         New-NetFirewallRule -Name "WinRM-HTTP" -DisplayName "Windows Remote Management (HTTP-In)" -Enabled True -Direction Inbound -Protocol TCP -LocalPort 5985 -Action Allow
     } else {
-        Write-Host "Firewall rule for WinRM already exists." -ForegroundColor Green
+        Write-Host "WinRM firewall rule already exists." -ForegroundColor Green
     }
 
-    # 5. Configure TrustedHosts list
+    # 5. Configure TrustedHosts
     $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
     if ($trustedHosts -ne "*") {
-        Write-Host "Configuring TrustedHosts list..." -ForegroundColor Yellow
+        Write-Host "Configuring TrustedHosts..." -ForegroundColor Yellow
         Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
     } else {
         Write-Host "TrustedHosts is already set to '*'." -ForegroundColor Green
@@ -58,63 +58,73 @@ function Ensure-WinRMConfiguration {
     Write-Host "`n✅ All operations completed successfully! WinRM service is active and ready for remote connections." -ForegroundColor Green
 }
 
-# Function to check and install Active Directory Module
+
+
+
+# Function to check and install the Active Directory Module if needed
 function Ensure-ActiveDirectoryModule {
-   Write-Host "Checking system readiness..." -ForegroundColor Yellow
-   # Check if AD module is installed
-   $moduleInstalled = Get-Module -ListAvailable -Name ActiveDirectory
-   if (-not $moduleInstalled) {
-       Write-Host "Active Directory module not found. Installing module..." -ForegroundColor Yellow
-       # Install RSAT Active Directory module
-       try {
-           Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0 -ErrorAction Stop
-           Write-Host "Active Directory module installed successfully." -ForegroundColor Green
-       } catch {
-           Write-Host "Error installing Active Directory module: $_" -ForegroundColor Red
-           exit 1
-       }
-   } else {
-       Write-Host "Active Directory module already installed." -ForegroundColor Green
-   }
-   # Import module
-   try {
-       Import-Module ActiveDirectory -ErrorAction Stop
-       Write-Host "Active Directory module loaded." -ForegroundColor Green
-   } catch {
-       Write-Host "Error loading Active Directory module: $_" -ForegroundColor Red
-       exit 1
-   }
+    Write-Host "Checking system readiness..." -ForegroundColor Yellow
+
+    # Check if the Active Directory module is installed
+    $moduleInstalled = Get-Module -ListAvailable -Name ActiveDirectory
+    if (-not $moduleInstalled) {
+        Write-Host "Active Directory module not found. Installing module..." -ForegroundColor Yellow
+
+        # Install RSAT Active Directory module
+        try {
+            Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0 -ErrorAction Stop
+            Write-Host "Active Directory module installed successfully." -ForegroundColor Green
+        } catch {
+            Write-Host "Error occurred while installing Active Directory module: $_" -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host "Active Directory module is already installed." -ForegroundColor Green
+    }
+
+    # Import the module
+    try {
+        Import-Module ActiveDirectory -ErrorAction Stop
+        Write-Host "Active Directory module loaded." -ForegroundColor Green
+    } catch {
+        Write-Host "Error occurred while loading Active Directory module: $_" -ForegroundColor Red
+        exit 1
+    }
 }
 
-# Function to check PowerShell version
+# Function to check the PowerShell version
 function Ensure-PowerShellVersion {
-   $requiredVersion = [Version]"5.1"
-   if ($PSVersionTable.PSVersion -lt $requiredVersion) {
-       Write-Host "PowerShell version $($PSVersionTable.PSVersion) is below required $requiredVersion." -ForegroundColor Red
-       Write-Host "Please install [Windows Management Framework] to update PowerShell." -ForegroundColor Yellow
-       exit 1
-   } else {
-       Write-Host "PowerShell version meets requirements ($($PSVersionTable.PSVersion))." -ForegroundColor Green
-   }
+    $requiredVersion = [Version]"5.1"
+    if ($PSVersionTable.PSVersion -lt $requiredVersion) {
+        Write-Host "PowerShell version $($PSVersionTable.PSVersion) is below the required $requiredVersion." -ForegroundColor Red
+        Write-Host "You need to download [Windows Management Framework] to update PowerShell." -ForegroundColor Yellow
+        exit 1
+    } else {
+        Write-Host "PowerShell version is at the required level ($($PSVersionTable.PSVersion))." -ForegroundColor Green
+    }
 }
 
-# Function to add server to TrustedHosts
+# Function to add a server to TrustedHosts
 function Ensure-TrustedHosts {
-   param([string]$Server)
-   $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
-   if ($trustedHosts -notlike "*$Server*") {
-       Write-Host "Adding server ($Server) to TrustedHosts list..." -ForegroundColor Yellow
-       Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$trustedHosts,$Server" -Force
-       Write-Host "Server added to TrustedHosts list." -ForegroundColor Green
-   } else {
-       Write-Host "Server ($Server) already in TrustedHosts list." -ForegroundColor Green
-   }
+    param([string]$Server)
+
+    $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+    if ($trustedHosts -notlike "*$Server*") {
+        Write-Host "Adding server ($Server) to TrustedHosts..." -ForegroundColor Yellow
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$trustedHosts,$Server" -Force
+        Write-Host "Server added to TrustedHosts." -ForegroundColor Green
+    } else {
+        Write-Host "Server ($Server) is already in TrustedHosts." -ForegroundColor Green
+    }
 }
 
 # Call functions
 Ensure-PowerShellVersion
 Ensure-ActiveDirectoryModule
-Write-Host "System successfully prepared. Starting main script..." -ForegroundColor Cyan
+
+
+Write-Host "System successfully prepared. Now running the main script..." -ForegroundColor Cyan
+
 # Main script starts here
 
 function Test-IsDomainController {
@@ -135,17 +145,19 @@ if (Test-IsDomainController) {
         Import-Module ActiveDirectory -ErrorAction Stop
         Write-Host "Active Directory module loaded" -ForegroundColor Green
     } catch {
-        Write-Host "Failed to load Active Directory module: $_" -ForegroundColor Red
+        Write-Host "Active Directory module could not be loaded: $_" -ForegroundColor Red
         exit 1
     }
 } else {
 
 $loginXaml = @"
+
+
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="av"
-    Title="Connect to Domain Controller" 
+    Title="Domain Controller Connection" 
     Height="400" Width="440"
     WindowStartupLocation="CenterScreen"
     WindowStyle="ToolWindow"
@@ -254,6 +266,9 @@ $loginXaml = @"
                 Width="200" Grid.ColumnSpan="2" Height="40" Margin="75,-9,75,130" Foreground="White" Background="#FF29298E"/>
     </Grid>
 </Window>
+
+
+
 "@
 
     $reader = [System.IO.StringReader]::new($loginXaml)
@@ -284,16 +299,16 @@ $loginXaml = @"
         try {
             $credential = New-Object System.Management.Automation.PSCredential($username, $password)
             
-            # ÆvvÉ™lcÉ™ normal qoÅŸulma cÉ™hdi
+            # First attempt to connect normally
             try {
                 $session = New-PSSession -ComputerName $server -Credential $credential -ErrorAction Stop
             } catch {
-                # IP Ã¼nvanÄ±dÄ±rsa, TrustedHosts-a É™lavÉ™ et
+                # If it's an IP address, add to TrustedHosts
                 if ($server -match "^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$") {
                     Write-Host "Adding $server to TrustedHosts..." -ForegroundColor Yellow
                     Set-Item WSMan:\localhost\Client\TrustedHosts -Value $server -Force
                     
-                    # TrustedHosts-a É™lavÉ™dÉ™n sonra yenidÉ™n cÉ™hd et
+                    # Retry after adding to TrustedHosts
                     $session = New-PSSession -ComputerName $server -Credential $credential
                 }
                 else {
@@ -359,7 +374,7 @@ try {
     foreach ($user in $adUsers) {
         $passwordStatus = if (-not $user.PasswordLastSet) {
             $script:stats.NoPasswords++
-            "Password not set"
+            "No password set"
         } elseif ($user.PasswordNeverExpires) {
             $script:stats.ValidPasswords++
             "Never expires"
@@ -372,7 +387,7 @@ try {
                 "Expired"
             } else {
                 $script:stats.ValidPasswords++
-                "$($maxPasswordAge - $passwordAge) days left"
+                "$($maxPasswordAge - $passwordAge) days remaining"
             }
         }
 
@@ -382,64 +397,67 @@ try {
             $script:stats.DeactivatedUsers++
         }
 
-        # Extract OU from DistinguishedName
-        $ou = ($user.DistinguishedName -split ",") | Where-Object { $_ -like "OU=*" } | ForEach-Object { $_.Substring(3) }
-        $ou = $ou -join ", "  # Join multiple OUs
-
-        # Get groups
-        $groups = $user.MemberOf | ForEach-Object {
-            try {
-                (Get-ADGroup $_).Name
-            } catch {
-                $null
-            }
-        } | Where-Object { $_ -ne $null }
-
-        # Add user to allUsers collection
-        $script:allUsers.Add([PSCustomObject]@{
-            RowNumber = $script:rowNumber
-            DisplayName = $user.DisplayName
-            SamAccountName = $user.SamAccountName
-            EmailAddress = $user.EmailAddress
-            Department = $user.Department
-            LastLogonDate = if ($user.LastLogonDate) {
-                $user.LastLogonDate.ToString("dd.MM.yyyy HH:mm")
-            } else { "Never" }
-            Status = if ($user.Enabled) { "Active" } else { "Inactive" }
-            PasswordStatus = $passwordStatus
-            Groups = ($groups -join ", ")
-            Title = $user.Title
-            Phone = $user.telephoneNumber
-            Mobile = $user.mobile
-            Created = $user.WhenCreated.ToString("dd.MM.yyyy")
-            AccountStatus = if ($user.Enabled) { "Active" } else { "Inactive" }
-            OU = $ou  # Add OU
-        })
-
-        $script:rowNumber++
-    }
+           # Extract OU from DistinguishedName
+           $ou = ($user.DistinguishedName -split ",") | Where-Object { $_ -like "OU=*" } | ForEach-Object { $_.Substring(3) }
+           $ou = $ou -join ", "  # Join multiple OUs
+       
+           # Retrieve groups
+           $groups = $user.MemberOf | ForEach-Object {
+               try {
+                   (Get-ADGroup $_).Name
+               } catch {
+                   $null
+               }
+           } | Where-Object { $_ -ne $null }
+       
+                # Add user to allUsers collection
+                $script:allUsers.Add([PSCustomObject]@{
+                   RowNumber = $script:rowNumber
+                   DisplayName = $user.DisplayName
+                   SamAccountName = $user.SamAccountName
+                   EmailAddress = $user.EmailAddress
+                   Department = $user.Department
+                   LastLogonDate = if ($user.LastLogonDate) {
+                       $user.LastLogonDate.ToString("dd.MM.yyyy HH:mm")
+                   } else { "Never" }
+                   Status = if ($user.Enabled) { "Active" } else { "Inactive" }
+                   PasswordStatus = $passwordStatus
+                   Groups = ($groups -join ", ")
+                   Title = $user.Title
+                   Phone = $user.telephoneNumber
+                   Mobile = $user.mobile
+                   Created = $user.WhenCreated.ToString("dd.MM.yyyy")
+                   AccountStatus = if ($user.Enabled) { "Active" } else { "Inactive" }
+                   OU = $ou  # Add OU
+               })
+       
+               $script:rowNumber++
+           }
 
     Write-Host "Data processed" -ForegroundColor Green
     Write-Host "Total users: $($script:stats.TotalUsers)" -ForegroundColor Cyan
     Write-Host "Active users: $($script:stats.ActiveUsers)" -ForegroundColor Green
-    Write-Host "Inactive accounts: $($script:stats.DeactivatedUsers)" -ForegroundColor Yellow
-    Write-Host "Expired passwords: $($script:stats.ExpiredPasswords)" -ForegroundColor Red
-    Write-Host "No passwords set: $($script:stats.NoPasswords)" -ForegroundColor Magenta  
+    Write-Host "Deactivated accounts: $($script:stats.DeactivatedUsers)" -ForegroundColor Yellow
+    Write-Host "Password expired: $($script:stats.ExpiredPasswords)" -ForegroundColor Red
+    Write-Host "No password set: $($script:stats.NoPasswords)" -ForegroundColor Magenta  
     Write-Host "Valid passwords: $($script:stats.ValidPasswords)" -ForegroundColor Blue
 
     $totalTimer.Stop()
     Write-Host "Total execution time: $($totalTimer.Elapsed.TotalSeconds) seconds" -ForegroundColor Cyan
 
 } catch {
-    Write-Host "An error occurred: $_" -ForegroundColor Red
+    Write-Host "Error occurred: $_" -ForegroundColor Red
     exit
 }
 
 $xaml = @"
+
+
+
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Active Directory User Report" 
-    Height="500" Width="1000"
+    Height="700" Width="1282"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
     Background="#1E1E1E" Foreground="#FF1E1E1E">
@@ -562,7 +580,7 @@ $xaml = @"
                     <DropShadowEffect ShadowDepth="1" BlurRadius="6" Opacity="0.3"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Expired Passwords" FontWeight="SemiBold" Foreground="#F44336"/>
+                    <TextBlock Text="Password Expired" FontWeight="SemiBold" Foreground="#F44336"/>
                     <TextBlock Name="ExpiredPasswordText" Text="0" FontSize="24" FontWeight="Bold" Foreground="#EF9A9A"/>
                 </StackPanel>
             </Border>
@@ -654,8 +672,8 @@ $xaml = @"
                     <StackPanel Grid.Column="1" Margin="5">
                         <TextBlock Text="Password Status" FontWeight="Bold" Margin="0,0,0,5"/>
                         <CheckBox Name="PasswordExpiredFilter" Content="Expired" Margin="0,2"/>
-                        <CheckBox Name="PasswordNeverExpiresFilter" Content="Never Expires" Margin="0,2"/>
-                        <CheckBox Name="NoPasswordFilter" Content="No Password Set" Margin="0,2"/>
+                        <CheckBox Name="PasswordNeverExpiresFilter" Content="Never expires" Margin="0,2"/>
+                        <CheckBox Name="NoPasswordFilter" Content="No password set" Margin="0,2"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Margin="5">
@@ -685,7 +703,7 @@ $xaml = @"
                           IsReadOnly="True"
                           SelectionMode="Extended" Foreground="White" BorderBrush="#FF010306" Margin="0,0,0,-29">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="100" SortDirection="Ascending">
+                    <DataGridTextColumn Header="Row Number" Binding="{Binding RowNumber}" Width="100" SortDirection="Ascending">
                         <DataGridTextColumn.HeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -704,7 +722,7 @@ $xaml = @"
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Username" Binding="{Binding SamAccountName}" Width="130">
+                    <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="130">
                         <DataGridTextColumn.HeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="#424242"/>
@@ -788,7 +806,7 @@ $xaml = @"
 
                     <DataGridTextColumn Header="Groups" Binding="{Binding Groups}" Width="SizeToCells">
                         <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader">
+                            <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="#424242"/>
                                 <Setter Property="Foreground" Value="#f2f2f2"/>
                                 <Setter Property="Padding" Value="10,5"/>
@@ -820,6 +838,11 @@ $xaml = @"
         </Grid>
     </Grid>
 </Window>
+
+
+
+
+
 "@
 
 try {
@@ -862,9 +885,9 @@ function Update-UIStatistics {
         $totalUsersText.Text = $script:allUsers.Count
         $activeUsersText.Text = ($script:allUsers | Where-Object {$_.Status -eq "Active"}).Count
         $deactivatedText.Text = ($script:allUsers | Where-Object {$_.Status -eq "Inactive"}).Count
-        $expiredPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -match "expired"}).Count
-        $noPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -eq "Password not set"}).Count
-        $validPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -notmatch "expired|not set"}).Count
+        $expiredPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -match "Expired"}).Count
+        $noPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -eq "No password set"}).Count
+        $validPasswordText.Text = ($script:allUsers | Where-Object {$_.PasswordStatus -notmatch "Expired|No password set"}).Count
     })
 }
 
@@ -902,6 +925,7 @@ function Show-UserDetails {
     }
 
     $detailsXaml = @"
+    
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1100,7 +1124,7 @@ function Reset-UserPassword {
                 FontWeight="Bold"
                 Cursor="Hand"/>
         </StackPanel>
-        </Grid>
+    </Grid>
 </Window>
 "@
     $resetPasswordReader = [System.IO.StringReader]::new($resetPasswordXaml)
@@ -1131,7 +1155,7 @@ function Reset-UserPassword {
     
         if ($newPassPlain -ne $confirmPassPlain) {
             [System.Windows.MessageBox]::Show(
-                "Passwords do not match.",
+                "Passwords don't match.",
                 "Error",
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Error
@@ -1142,14 +1166,14 @@ function Reset-UserPassword {
         $adminUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
     
         try {
-            # Check if the password meets requirements
+            # Check if the password meets the requirements
             $domainPolicy = Get-ADDefaultDomainPasswordPolicy
             $passwordLengthValid = ($newPassPlain.Length -ge $domainPolicy.MinPasswordLength)
             $passwordComplexityValid = $newPassPlain -match "^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\d]).+$"
     
             if (-not $passwordLengthValid) {
                 [System.Windows.MessageBox]::Show(
-                    "Password length does not meet minimum requirements. Please choose a longer password.",
+                    "Password length does not meet the minimum requirements. Please choose a longer password.",
                     "Password Error",
                     [System.Windows.MessageBoxButton]::OK,
                     [System.Windows.MessageBoxImage]::Error
@@ -1159,7 +1183,7 @@ function Reset-UserPassword {
     
             if (-not $passwordComplexityValid) {
                 [System.Windows.MessageBox]::Show(
-                    "Password does not meet complexity requirements. Please use a mix of uppercase and lowercase letters, numbers, and special characters.",
+                    "Password does not meet complexity requirements. Please use uppercase and lowercase letters, numbers, and special characters.",
                     "Password Error",
                     [System.Windows.MessageBoxButton]::OK,
                     [System.Windows.MessageBoxImage]::Error
@@ -1170,7 +1194,7 @@ function Reset-UserPassword {
             # Reset the password
             Set-ADAccountPassword -Identity $User.SamAccountName -NewPassword $newPassword -Reset
     
-            # Log the action
+            # Write data for the log file
             $logBasePath = "C:\AD-Reports-logs"
             if (-not (Test-Path -Path $logBasePath)) {
                 New-Item -ItemType Directory -Path $logBasePath -Force
@@ -1180,55 +1204,56 @@ function Reset-UserPassword {
             $fileName = "$($User.SamAccountName)_PasswordChanged_$dateString.log"
             $logFilePath = Join-Path -Path $logBasePath -ChildPath $fileName
     
-            $logContent = @"
-Action: PasswordChanged
-Target User: $($User.SamAccountName)
-Performed By: $adminUser
-Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-"@
+            $logContent = "@
+    Action: PasswordChanged
+    Target User: $($User.SamAccountName)
+    Performed By: $adminUser
+    Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    @"
     
             Set-Content -Path $logFilePath -Value $logContent -Force
     
             [System.Windows.MessageBox]::Show(
-                "Password successfully reset and action logged.",
+                "Password successfully reset and operation logged.",
                 "Information",
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Information
             )
             $resetPasswordWindow.Close()
         } catch {
-            # Analyze the error and show appropriate message
+            # Analyze the error and display the appropriate message
             $errorMessage = $_.Exception.Message
             [System.Windows.MessageBox]::Show(
-                "Error resetting password: $errorMessage",
+                "Error occurred while resetting password: $errorMessage",
                 "Error",
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Error
             )
     
-            # Log the error
+            # Write the error to the log file
             $logBasePath = "C:\AD-Reports-logs"
             $errorLogFileName = "$($User.SamAccountName)_PasswordChangeError_$dateString.log"
             $errorLogFilePath = Join-Path -Path $logBasePath -ChildPath $errorLogFileName
     
-            $errorLogContent = @"
-Action: PasswordChangeError
-Target User: $($User.SamAccountName)
-Performed By: $adminUser
-Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-Error: $errorMessage
-"@
+            $errorLogContent = "@
+    Action: PasswordChangeError
+    Target User: $($User.SamAccountName)
+    Performed By: $adminUser
+    Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    Error: $errorMessage
+    @"
     
             Set-Content -Path $errorLogFilePath -Value $errorLogContent -Force
         }
     })
-
+    
     $closeButton.Add_Click({
         $resetPasswordWindow.Close()
     })
 
     $resetPasswordWindow.ShowDialog()
 }
+
 
 function Toggle-AccountLock {
     param([PSCustomObject]$User)
@@ -1243,23 +1268,23 @@ function Toggle-AccountLock {
         return
     }
 
-    # Get admin username
+    # Get the admin username
     $adminUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 
     try {
-        # Base path for log files
+        # Base path for the log folder
         $logBasePath = "C:\AD-Reports-logs"
         if (-not (Test-Path -Path $logBasePath)) {
             New-Item -ItemType Directory -Path $logBasePath -Force
         }
 
-        # Format date for log file name
+        # Format the date for use in the log file name
         $dateString = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
         $fileName = "$($User.SamAccountName)_AccountStatusChange_$dateString.log"
         $logFilePath = Join-Path -Path $logBasePath -ChildPath $fileName
 
         if ($User.Status -eq "Active") {
-            # Deactivate account
+            # Deactivate the account
             Disable-ADAccount -Identity $User.SamAccountName
             [System.Windows.MessageBox]::Show(
                 "Account successfully deactivated.",
@@ -1268,16 +1293,16 @@ function Toggle-AccountLock {
                 [System.Windows.MessageBoxImage]::Information
             )
 
-            # Log the action
-            $logContent = @"
+            # Write log data
+            $logContent = "@
 Action: AccountDeactivated
 Target User: $($User.SamAccountName)
 Performed By: $adminUser
 Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-"@
+@"
             Set-Content -Path $logFilePath -Value $logContent -Force
         } else {
-            # Activate account
+            # Activate the account
             Enable-ADAccount -Identity $User.SamAccountName
             [System.Windows.MessageBox]::Show(
                 "Account successfully activated.",
@@ -1286,35 +1311,35 @@ Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
                 [System.Windows.MessageBoxImage]::Information
             )
 
-            # Log the action
-            $logContent = @"
+            # Write log data
+            $logContent = "@
 Action: AccountActivated
 Target User: $($User.SamAccountName)
 Performed By: $adminUser
 Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-"@
+@"
             Set-Content -Path $logFilePath -Value $logContent -Force
         }
 
         Refresh-ADUserData
     } catch {
-        # Log the error
+        # Write the error to the log file
         $logBasePath = "C:\AD-Reports-logs"
         $errorFileName = "$($User.SamAccountName)_AccountStatusChangeError_$dateString.log"
         $errorLogFilePath = Join-Path -Path $logBasePath -ChildPath $errorFileName
 
-        $errorLogContent = @"
+        $errorLogContent = "@
 Action: AccountStatusChangeError
 Target User: $($User.SamAccountName)
 Performed By: $adminUser
 Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 Error: $_
-"@
+@"
         Set-Content -Path $errorLogFilePath -Value $errorLogContent -Force
 
-        # Show error message
+        # Display the error message
         [System.Windows.MessageBox]::Show(
-            "Error changing account status: $_",
+            "Error occurred while changing account status: $_",
             "Error",
             [System.Windows.MessageBoxButton]::OK,
             [System.Windows.MessageBoxImage]::Error
@@ -1345,7 +1370,7 @@ function Refresh-ADUserData {
         foreach ($user in $adUsers) {
             $passwordStatus = if (-not $user.PasswordLastSet) {
                 $script:stats.NoPasswords++
-                "Password not set"
+                "No password set"
             } elseif ($user.PasswordNeverExpires) {
                 $script:stats.ValidPasswords++
                 "Never expires"
@@ -1358,7 +1383,7 @@ function Refresh-ADUserData {
                     "Expired"
                 } else {
                     $script:stats.ValidPasswords++
-                    "$($maxPasswordAge - $passwordAge) days left"
+                    "$($maxPasswordAge - $passwordAge) days remaining"
                 }
             }
 
@@ -1372,7 +1397,7 @@ function Refresh-ADUserData {
             $ou = ($user.DistinguishedName -split ",") | Where-Object { $_ -like "OU=*" } | ForEach-Object { $_.Substring(3) }
             $ou = $ou -join ", "  # Join multiple OUs
 
-            # Get groups
+            # Retrieve groups
             $groups = $user.MemberOf | ForEach-Object {
                 try {
                     (Get-ADGroup $_).Name
@@ -1398,7 +1423,6 @@ function Refresh-ADUserData {
                 Phone = $user.telephoneNumber
                 Mobile = $user.mobile
                 Created = $user.WhenCreated.ToString("dd.MM.yyyy")
-                AccountStatus = if ($user.Enabled) { "Active" } else { "Inactive" }
                 OU = $ou  # Add OU
             })
 
@@ -1412,13 +1436,14 @@ function Refresh-ADUserData {
         })
     } catch {
         [System.Windows.MessageBox]::Show(
-            "Error refreshing data: $_",
+            "Error occurred while refreshing data: $_",
             "Error",
             [System.Windows.MessageBoxButton]::OK,
             [System.Windows.MessageBoxImage]::Error
         )
     }
 }
+
 function Apply-Filter {
     $view = [System.Windows.Data.CollectionViewSource]::GetDefaultView($usersGrid.ItemsSource)
     $view.Filter = {
@@ -1432,9 +1457,9 @@ function Apply-Filter {
         $passwordMatch = if ($passwordExpiredFilter.IsChecked -or 
                             $passwordNeverExpiresFilter.IsChecked -or 
                             $noPasswordFilter.IsChecked) {
-            ($passwordExpiredFilter.IsChecked -and $item.PasswordStatus -match "expired") -or
+            ($passwordExpiredFilter.IsChecked -and $item.PasswordStatus -match "Expired") -or
             ($passwordNeverExpiresFilter.IsChecked -and $item.PasswordStatus -eq "Never expires") -or
-            ($noPasswordFilter.IsChecked -and $item.PasswordStatus -eq "Password not set")
+            ($noPasswordFilter.IsChecked -and $item.PasswordStatus -eq "No password set")
         } else { $true }
 
         $lastLoginMatch = switch ($lastLoginFilter.SelectedItem.Content) {
@@ -1559,16 +1584,16 @@ $exportButton.Add_Click({
 
     if ($saveDialog.ShowDialog()) {
         try {
-            # Get data from DataGrid
+            # Retrieve data from DataGrid
             $view = [System.Windows.Data.CollectionViewSource]::GetDefaultView($usersGrid.ItemsSource)
             $filteredData = @()
             foreach ($item in $view) {
                 $filteredData += $item
             }
 
-            # Select columns in correct order and name them in English
+            # Select columns in the correct order and name them in English
             $orderedData = $filteredData | Select-Object @{
-                    Name='#'; Expression={$_.RowNumber}
+                    Name='Row Number'; Expression={$_.RowNumber}
                 }, @{
                     Name='Display Name'; Expression={$_.DisplayName}
                 }, @{
@@ -1599,7 +1624,7 @@ $exportButton.Add_Click({
             $orderedData | Export-Csv -Path $saveDialog.FileName -NoTypeInformation -Encoding UTF8
 
             [System.Windows.MessageBox]::Show(
-                "Data successfully exported to CSV file: $($saveDialog.FileName)", 
+                "Successfully exported to CSV file: $($saveDialog.FileName)", 
                 "Export Successful",
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Information
@@ -1607,7 +1632,7 @@ $exportButton.Add_Click({
         }
         catch {
             [System.Windows.MessageBox]::Show(
-                "Error occurred during export: $_", 
+                "Export Error: $_", 
                 "Error",
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Error
@@ -1642,7 +1667,7 @@ $refreshButton.Add_Click({
     }
     catch {
         [System.Windows.MessageBox]::Show(
-            "An error occurred: $_", 
+            "Error occurred: $_", 
             "Error", 
             [System.Windows.MessageBoxButton]::OK, 
             [System.Windows.MessageBoxImage]::Error
@@ -1664,13 +1689,13 @@ function Set-Filter {
             $view.Filter = { param($item) $item.Status -eq "Inactive" }
         }
         "PasswordExpired" {
-            $view.Filter = { param($item) $item.PasswordStatus -match "expired" }
+            $view.Filter = { param($item) $item.PasswordStatus -match "Expired" }
         }
         "NoPassword" {
-            $view.Filter = { param($item) $item.PasswordStatus -eq "Password not set" }
+            $view.Filter = { param($item) $item.PasswordStatus -eq "No password set" }
         }
         "ValidPassword" {
-            $view.Filter = { param($item) $item.PasswordStatus -notmatch "expired|not set" }
+            $view.Filter = { param($item) $item.PasswordStatus -notmatch "Expired|No password set" }
         }
     }
 
