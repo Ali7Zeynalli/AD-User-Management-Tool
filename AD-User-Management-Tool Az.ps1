@@ -13,6 +13,58 @@
 )
 
 
+
+
+# WinRM xidmətinin vəziyyətini yoxlayan və düzəldən funksiya
+function Ensure-WinRMConfiguration {
+    Write-Host "WinRM xidmətini yoxlayıram..." -ForegroundColor Yellow
+
+    # 1. WinRM xidmətinin vəziyyətini yoxla
+    $winrmStatus = Get-Service -Name WinRM
+    if ($winrmStatus.Status -ne "Running") {
+        Write-Host "WinRM xidməti aktiv deyil, aktivləşdirirəm..." -ForegroundColor Yellow
+        Start-Service -Name WinRM
+        Set-Service -Name WinRM -StartupType Automatic
+    } else {
+        Write-Host "WinRM xidməti artıq aktivdir." -ForegroundColor Green
+    }
+
+    # 2. WinRM konfiqurasiyasını yoxla və düzəlt
+    Write-Host "WinRM konfiqurasiyasını yoxlayıram və tətbiq edirəm..." -ForegroundColor Yellow
+    winrm quickconfig -quiet
+
+    # 3. PowerShell Remoting-i aktiv et
+    Write-Host "PowerShell Remoting-i aktiv edirəm..." -ForegroundColor Yellow
+    Enable-PSRemoting -Force
+
+    # 4. Firewall qaydasını yoxla və aç
+    $firewallRule = Get-NetFirewallRule -DisplayName "Windows Remote Management (HTTP-In)" -ErrorAction SilentlyContinue
+    if (-not $firewallRule) {
+        Write-Host "WinRM üçün firewall qaydası əlavə olunur..." -ForegroundColor Yellow
+        New-NetFirewallRule -Name "WinRM-HTTP" -DisplayName "Windows Remote Management (HTTP-In)" -Enabled True -Direction Inbound -Protocol TCP -LocalPort 5985 -Action Allow
+    } else {
+        Write-Host "WinRM üçün firewall qaydası artıq mövcuddur." -ForegroundColor Green
+    }
+
+    # 5. TrustedHosts siyahısını tənzimlə
+    $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+    if ($trustedHosts -ne "*") {
+        Write-Host "TrustedHosts siyahısını tənzimləyirəm..." -ForegroundColor Yellow
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+    } else {
+        Write-Host "TrustedHosts artıq '*' olaraq təyin edilib." -ForegroundColor Green
+    }
+
+    # 6. WinRM xidmətini yenidən başladın
+    Write-Host "WinRM xidmətini yenidən başladırıq..." -ForegroundColor Yellow
+    Restart-Service WinRM
+
+    Write-Host "`n✅ Bütün əməliyyatlar uğurla tamamlandı! WinRM xidməti aktivdir və uzaq bağlantılar üçün hazırdır." -ForegroundColor Green
+}
+
+
+
+
 # Active Directory Modulunu yoxlayan və lazım olduqda quraşdıran funksiya
 function Ensure-ActiveDirectoryModule {
     Write-Host "Sistemin hazır vəziyyətini yoxlayıram..." -ForegroundColor Yellow

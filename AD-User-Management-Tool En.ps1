@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory=$false)]
     [string]$Server = $env:COMPUTERNAME,
 
@@ -11,6 +11,52 @@ param(
     [Parameter(Mandatory=$false)]
     [System.Management.Automation.PSCredential]$Credential
 )
+# Function to check and fix the status of the WinRM service
+function Ensure-WinRMConfiguration {
+    Write-Host "Checking WinRM service status..." -ForegroundColor Yellow
+
+    # 1. Check the status of the WinRM service
+    $winrmStatus = Get-Service -Name WinRM
+    if ($winrmStatus.Status -ne "Running") {
+        Write-Host "WinRM service is not running, starting it now..." -ForegroundColor Yellow
+        Start-Service -Name WinRM
+        Set-Service -Name WinRM -StartupType Automatic
+    } else {
+        Write-Host "WinRM service is already running." -ForegroundColor Green
+    }
+
+    # 2. Check and fix WinRM configuration
+    Write-Host "Checking and applying WinRM configuration..." -ForegroundColor Yellow
+    winrm quickconfig -quiet
+
+    # 3. Enable PowerShell Remoting
+    Write-Host "Enabling PowerShell Remoting..." -ForegroundColor Yellow
+    Enable-PSRemoting -Force
+
+    # 4. Check and add firewall rule
+    $firewallRule = Get-NetFirewallRule -DisplayName "Windows Remote Management (HTTP-In)" -ErrorAction SilentlyContinue
+    if (-not $firewallRule) {
+        Write-Host "Adding firewall rule for WinRM..." -ForegroundColor Yellow
+        New-NetFirewallRule -Name "WinRM-HTTP" -DisplayName "Windows Remote Management (HTTP-In)" -Enabled True -Direction Inbound -Protocol TCP -LocalPort 5985 -Action Allow
+    } else {
+        Write-Host "Firewall rule for WinRM already exists." -ForegroundColor Green
+    }
+
+    # 5. Configure TrustedHosts list
+    $trustedHosts = (Get-Item WSMan:\localhost\Client\TrustedHosts).Value
+    if ($trustedHosts -ne "*") {
+        Write-Host "Configuring TrustedHosts list..." -ForegroundColor Yellow
+        Set-Item WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+    } else {
+        Write-Host "TrustedHosts is already set to '*'." -ForegroundColor Green
+    }
+
+    # 6. Restart the WinRM service
+    Write-Host "Restarting WinRM service..." -ForegroundColor Yellow
+    Restart-Service WinRM
+
+    Write-Host "`n✅ All operations completed successfully! WinRM service is active and ready for remote connections." -ForegroundColor Green
+}
 
 # Function to check and install Active Directory Module
 function Ensure-ActiveDirectoryModule {
@@ -238,16 +284,16 @@ $loginXaml = @"
         try {
             $credential = New-Object System.Management.Automation.PSCredential($username, $password)
             
-            # Əvvəlcə normal qoşulma cəhdi
+            # ÆvvÉ™lcÉ™ normal qoÅŸulma cÉ™hdi
             try {
                 $session = New-PSSession -ComputerName $server -Credential $credential -ErrorAction Stop
             } catch {
-                # IP ünvanıdırsa, TrustedHosts-a əlavə et
+                # IP Ã¼nvanÄ±dÄ±rsa, TrustedHosts-a É™lavÉ™ et
                 if ($server -match "^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$") {
                     Write-Host "Adding $server to TrustedHosts..." -ForegroundColor Yellow
                     Set-Item WSMan:\localhost\Client\TrustedHosts -Value $server -Force
                     
-                    # TrustedHosts-a əlavədən sonra yenidən cəhd et
+                    # TrustedHosts-a É™lavÉ™dÉ™n sonra yenidÉ™n cÉ™hd et
                     $session = New-PSSession -ComputerName $server -Credential $credential
                 }
                 else {
